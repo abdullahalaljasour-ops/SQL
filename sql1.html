@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>متجر تقنية | مختبر SQL Injection التفاعلي</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{font-family:Cairo,sans-serif;background:#f8fafc;color:#1e293b}
+.code{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;font-family:monospace}
+.input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:white}
+.btn{background:#2563eb;color:white;padding:11px 20px;border-radius:12px;font-weight:700;cursor:pointer;transition:0.2s}
+.btn:hover{background:#1d4ed8}
+.card{background:white;border:1px solid #e2e8f0;border-radius:18px;padding:22px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header class="bg-white border-b sticky top-0 z-30">
+<div class="max-w-7xl mx-auto px-5 py-4 flex flex-wrap gap-4 items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-blue-600 text-white p-3 rounded-xl">
+<i data-lucide="cpu"></i>
+</div>
+<div>
+<h1 class="font-extrabold text-xl">متجر تقنية</h1>
+<p class="text-xs text-slate-500">للأجهزة الذكية والإلكترونيات</p>
+</div>
+</div>
+<nav class="flex flex-wrap gap-4 text-sm font-bold">
+<a href="#products">المنتجات</a>
+<a href="#tracking">تتبع الطلبات</a>
+<a href="#sql-lab" class="text-blue-600">مختبر SQL</a>
+</nav>
+<div class="flex gap-2">
+<button onclick="openLogin()" class="btn">تسجيل الدخول</button>
+<button onclick="toggleCart()" class="bg-slate-900 text-white px-4 rounded-xl">
+السلة (<span id="cart-count">0</span>)
+</button>
+</div>
+</div>
+</header>
+
+<section class="bg-gradient-to-l from-slate-900 to-blue-950 text-white py-20 px-5">
+<div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
+<div>
+<p class="text-blue-300 font-bold mb-3">تشكيلة 2026 وصلت حديثاً</p>
+<h2 class="text-4xl font-extrabold leading-relaxed">
+ارتقِ بتجربتك الرقمية مع أحدث التقنيات
+</h2>
+<p class="text-slate-300 mt-4 leading-8">
+اكتشف أحدث الهواتف والحواسيب والسماعات والإكسسوارات،
+مع تجربة تعليمية تفاعلية لفهم أمن قواعد البيانات.
+</p>
+<div class="flex flex-wrap gap-3 mt-7">
+<a href="#products" class="btn">تصفح المنتجات</a>
+<a href="#sql-lab" class="border border-white/30 px-5 py-3 rounded-xl">
+ابدأ المختبر
+</a>
+</div>
+</div>
+<img class="w-full h-72 object-cover rounded-3xl"
+src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80"
+alt="أجهزة إلكترونية">
+</div>
+</section>
+
+<main id="products" class="max-w-7xl mx-auto px-5 py-16">
+<div class="flex flex-wrap justify-between gap-5 mb-8">
+<div>
+<h2 class="text-3xl font-extrabold">استكشف منتجاتنا</h2>
+<p class="text-slate-500">ابحث عن المنتج المناسب لك</p>
+</div>
+<input id="search-input" class="input max-w-sm"
+placeholder="ابحث عن هاتف، لابتوب، سماعة..."
+oninput="filterProducts()">
+</div>
+
+<div class="flex flex-wrap gap-2 mb-8">
+<button class="btn" onclick="setCategory('all')">الكل</button>
+<button class="btn" onclick="setCategory('phones')">الهواتف</button>
+<button class="btn" onclick="setCategory('laptops')">الحواسيب</button>
+<button class="btn" onclick="setCategory('audio')">الصوتيات</button>
+<button class="btn" onclick="setCategory('accessories')">الإكسسوارات</button>
+</div>
+<div id="products-grid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5"></div>
+<p id="no-results" class="hidden text-center py-10 text-slate-500">
+لا توجد منتجات مطابقة
+</p>
+</main>
+
+<section id="tracking" class="bg-white border-y py-16 px-5">
+<div class="max-w-3xl mx-auto">
+<h2 class="text-3xl font-extrabold text-center mb-3">تتبع حالة طلبك</h2>
+<p class="text-center text-slate-500 mb-8">
+أدخل رقم الطلب مثل ORD-1024
+</p>
+<form onsubmit="trackOrder(event)" class="card flex flex-wrap gap-3">
+<input id="order-id-input" class="input flex-1" required
+placeholder="ORD-1024">
+<button class="btn" type="submit">تتبع الآن</button>
+</form>
+<div id="tracking-result" class="card mt-5 hidden">
+<h3 class="font-bold">رقم الشحنة: <span id="track-order-number"></span></h3>
+<p class="text-blue-600 mt-2">الحالة التجريبية: خرج للتوصيل</p>
+<p class="text-sm text-slate-500 mt-2">
+هذه نتيجة محاكاة، وليست بيانات شحنة حقيقية.
+</p>
+</div>
+</div>
+</section>
+
+<section id="sql-lab" class="max-w-6xl mx-auto px-5 py-16">
+<div class="mb-8">
+<p class="text-blue-600 font-bold">Interactive Sandbox</p>
+<h2 class="text-3xl font-extrabold mt-2">مختبر SQL Injection التفاعلي</h2>
+<p class="text-slate-500 mt-3">
+جرّب إدخال حمولات الاختراق (Payloads) وشاهد كيف ينكسر الاستعلام غير الآمن وتُسرق البيانات الوهمية مقارنة بالاستعلام المحمي.
+</p>
+</div>
+
+<div class="card mb-6 bg-blue-50 border-blue-200">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div>
+<h3 class="font-extrabold text-lg">الوضع التعليمي المعزول</h3>
+<p class="text-sm text-slate-600">
+بيئة محاكاة آمنة لعرض أثر الاستغلال واستخراج البيانات الوهمية لمتدربي الدبلوم.
+</p>
+</div>
+<button id="lab-toggle" class="btn" onclick="toggleLab()">
+تفعيل المختبر
+</button>
+</div>
+</div>
+
+<div id="lab-content" class="hidden">
+<div class="flex flex-wrap gap-3 mb-6">
+<button class="btn" onclick="selectScenario('login')">1. تجاوز تسجيل الدخول</button>
+<button class="btn" onclick="selectScenario('search')">2. سرقة الجداول (UNION)</button>
+<button class="btn" onclick="selectScenario('tracking')">3. كشف جميع الطلبات</button>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+<div class="card">
+<h3 id="scenario-title" class="text-xl font-extrabold mb-2"></h3>
+<p id="scenario-desc" class="text-sm text-slate-500 mb-5"></p>
+<label class="font-bold text-sm">المدخل الأول</label>
+<input id="lab-input1" class="input mt-2 mb-4 code" oninput="updateLab()">
+<div id="second-field">
+<label class="font-bold text-sm">المدخل الثاني</label>
+<input id="lab-input2" class="input mt-2 mb-4 code" oninput="updateLab()">
+</div>
+<p class="font-bold text-sm mb-2">حمولات جاهزة للتجربة (Payloads):</p>
+<div id="examples" class="flex flex-wrap gap-2 mb-5"></div>
+<button class="btn w-full bg-red-600 hover:bg-red-700" onclick="simulateLab()">تنفيذ الاستعلام ومشاهدة النتيجة</button>
+<div id="lab-result" class="mt-5 text-sm"></div>
+</div>
+
+<div class="space-y-5">
+<div class="card border-red-200">
+<h3 class="font-bold text-red-600 mb-3">❌ استعلام غير آمن (String Concatenation)</h3>
+<pre id="unsafe-query" class="code bg-slate-950 text-red-300 p-4 rounded-xl text-sm"></pre>
+<p class="text-sm text-slate-500 mt-3">
+يُدمج الإدخال مباشرة داخل النص البرمجي، مما يسمح للمهاجم بتغيير منطق الاستعلام.
+</p>
+</div>
+<div class="card border-emerald-200">
+<h3 class="font-bold text-emerald-600 mb-3">✅ استعلام محمي (Prepared Statement)</h3>
+<pre id="safe-query" class="code bg-slate-950 text-emerald-300 p-4 rounded-xl text-sm"></pre>
+<p class="font-bold text-sm mt-3">المعاملات المنفصلة (Parameters):</p>
+<pre id="safe-params" class="code bg-slate-100 p-3 rounded-lg text-sm"></pre>
+<p class="text-sm text-slate-500 mt-3">
+تُعامل القيم كنصوص مجردة ولا تُفسر أبداً كأوامر SQL.
+</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<footer class="bg-slate-900 text-slate-400 text-center py-10">
+© 2026 متجر تقنية للإلكترونيات - إعداد وتجهيز المهندس / عبدالله بن جريد
+</footer>
+
+<div id="login-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4">
+<div class="bg-white rounded-3xl p-7 w-full max-w-md">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-xl font-extrabold">تسجيل الدخول</h2>
+<button onclick="closeLogin()">✕</button>
+</div>
+<form onsubmit="handleLogin(event)" class="space-y-4">
+<label class="block text-sm font-bold">البريد الإلكتروني أو اسم المستخدم</label>
+<input id="login-username" class="input" required>
+<label class="block text-sm font-bold">كلمة المرور</label>
+<input id="login-password" type="password" class="input" required>
+<button class="btn w-full">دخول إلى الحساب</button>
+</form>
+</div>
+</div>
+
+<div id="cart-drawer" class="hidden fixed inset-0 z-50 bg-slate-900/60">
+<div class="bg-white h-full w-full max-w-md mr-auto p-6 overflow-auto">
+<div class="flex justify-between mb-6">
+<h2 class="text-xl font-extrabold">سلة التسوق</h2>
+<button onclick="toggleCart()">✕</button>
+</div>
+<div id="cart-items" class="space-y-3"></div>
+<div class="border-t mt-6 pt-5">
+<p class="font-extrabold mb-4">الإجمالي: <span id="cart-total">0</span> ر.س</p>
+<button class="btn w-full" onclick="checkout()">إتمام الطلب</button>
+</div>
+</div>
+</div>
+
+<div id="toast" class="hidden fixed bottom-5 left-5 z-[60] bg-slate-900 text-white px-6 py-4 rounded-xl shadow-xl">
+<span id="toast-message"></span>
+</div>
+
+<script>
+const products=[
+{id:1,name:"آيفون 16 برو ماكس - 256 جيجابايت",category:"phones",price:5699,rating:4.9,image:"https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=600&q=80"},
+{id:2,name:"ماك بوك إير M3 - شاشة 13 إنش",category:"laptops",price:4799,rating:4.8,image:"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80"},
+{id:3,name:"سماعة سوني WH-1000XM5",category:"audio",price:1399,rating:4.9,image:"https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&w=600&q=80"},
+{id:4,name:"ساعة أبل ألترا 2",category:"accessories",price:3499,rating:4.7,image:"https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?auto=format&fit=crop&w=600&q=80"}
+];
+
+let category="all";
+let cart=[];
+let labEnabled=false;
+let scenario="login";
+
+const $=id=>document.getElementById(id);
+
+function renderProducts(items){
+$("products-grid").replaceChildren();
+$("no-results").classList.toggle("hidden",items.length!==0);
+items.forEach(p=>{
+const card=document.createElement("div");
+card.className="bg-white rounded-2xl overflow-hidden border shadow-sm";
+card.innerHTML=`
+<img src="${p.image}" alt="${p.name}" class="w-full h-48 object-cover">
+<div class="p-5">
+<h3 class="font-bold min-h-14">${p.name}</h3>
+<p class="font-extrabold text-blue-600 my-3">${p.price.toLocaleString("ar-SA")} ر.س</p>
+<p class="text-sm text-amber-600">★ ${p.rating}</p>
+<button class="btn w-full mt-4" onclick="addToCart(${p.id})">أضف للسلة</button>
+</div>`;
+$("products-grid").append(card);
+});
+}
+
+function filterProducts(){
+const q=$("search-input").value.trim().toLowerCase();
+renderProducts(products.filter(p=>(category==="all"||p.category===category)&&p.name.toLowerCase().includes(q)));
+}
+function setCategory(c){category=c;filterProducts()}
+
+function addToCart(id){
+const p=products.find(x=>x.id===id);
+if(!p)return;
+cart.push(p);
+updateCart();
+showToast("تمت إضافة المنتج إلى السلة");
+}
+function updateCart(){
+$("cart-count").textContent=cart.length;
+$("cart-items").replaceChildren();
+let total=0;
+cart.forEach((p,i)=>{
+total+=p.price;
+const row=document.createElement("div");
+row.className="flex justify-between items-center border-b py-3 gap-3";
+row.innerHTML=`<span>${p.name} — ${p.price} ر.س</span><button class="text-red-600 font-bold" onclick="cart.splice(${i},1);updateCart()">حذف</button>`;
+$("cart-items").append(row);
+});
+$("cart-total").textContent=total.toLocaleString("ar-SA");
+}
+function toggleCart(){$("cart-drawer").classList.toggle("hidden")}
+function checkout(){
+if(!cart.length){showToast("السلة فارغة");return}
+const id="ORD-"+Math.floor(1000+Math.random()*9000);
+cart=[];updateCart();toggleCart();
+showToast("تم إنشاء طلب تجريبي: "+id);
+}
+function openLogin(){$("login-modal").classList.remove("hidden")}
+function closeLogin(){$("login-modal").classList.add("hidden")}
+function handleLogin(e){
+e.preventDefault();
+closeLogin();
+showToast("مرحباً "+$("login-username").value+" — تسجيل دخول تجريبي");
+}
+function trackOrder(e){
+e.preventDefault();
+const id=$("order-id-input").value.trim().toUpperCase();
+if(!id)return;
+$("track-order-number").textContent=id;
+$("tracking-result").classList.remove("hidden");
+}
+let toastTimer;
+function showToast(message){
+$("toast-message").textContent=message;
+$("toast").classList.remove("hidden");
+clearTimeout(toastTimer);
+toastTimer=setTimeout(()=>$("toast").classList.add("hidden"),3500);
+}
+
+/* مختبر SQL التفاعلي المطور */
+const scenarios={
+login:{
+title:"سيناريو 1: تجاوز المصادقة (Authentication Bypass)",
+desc:"لاحظ كيف يؤدي الشرط الدائم ('1'='1) أو التعليق (--) إلى إلغاء التحقق من كلمة المرور والدخول بحساب المدير.",
+value1:"student",
+value2:"demo123",
+examples:[
+["إدخال طبيعي","student","demo123"],
+["حقن OR منطقي","' OR '1'='1","anypass"],
+["تجاوز بالتعليق","admin' --","anypass"]
+],
+unsafe:(a,b)=>`SELECT * FROM users\nWHERE username = '${a}'\nAND password = '${b}';`,
+safe:"SELECT * FROM users\nWHERE username = ? AND password = ?;",
+params:(a,b)=>[a,b]
+},
+search:{
+title:"سيناريو 2: استخراج البيانات عبر UNION SELECT",
+desc:"شاهد كيف يستغل المهاجم خانة البحث لدمج نتائج جدول المستخدمين السري مع نتائج المنتجات.",
+value1:"آيفون",
+examples:[
+["بحث طبيعي","آيفون"],
+["كسر الاستعلام (Error)","'"],
+["سرقة جدول المستخدمين","' UNION SELECT id, username, password FROM users --"]
+],
+unsafe:a=>`SELECT id, name, price\nFROM products\nWHERE name LIKE '%${a}%';`,
+safe:"SELECT id, name, price\nFROM products WHERE name LIKE ?;",
+params:a=>["%"+a+"%"]
+},
+tracking:{
+title:"سيناريو 3: كشف بيانات العملاء (Data Exposure)",
+desc:"إضافة شرط منطقي في رقم الطلب تجعل قاعدة البيانات تُرجع جميع طلبات العملاء بدلاً من طلب واحد.",
+value1:"ORD-1024",
+examples:[
+["طلب واحد (طبيعي)","ORD-1024"],
+["خطأ صياغة (Error)","'"],
+["كشف كل الطلبات","ORD-1024' OR '1'='1"]
+],
+unsafe:a=>`SELECT order_id, customer, total\nFROM orders\nWHERE order_id = '${a}';`,
+safe:"SELECT order_id, customer, total\nFROM orders WHERE order_id = ?;",
+params:a=>[a]
+}
+};
+
+function toggleLab(){
+labEnabled=!labEnabled;
+$("lab-content").classList.toggle("hidden",!labEnabled);
+$("lab-toggle").textContent=labEnabled?"إغلاق المختبر":"تفعيل المختبر";
+if(labEnabled)selectScenario("login");
+}
+
+function selectScenario(type){
+scenario=type;
+const s=scenarios[type];
+$("scenario-title").textContent=s.title;
+$("scenario-desc").textContent=s.desc;
+$("lab-input1").value=s.value1;
+$("lab-input2").value=s.value2||"";
+$("second-field").classList.toggle("hidden",type!=="login");
+$("examples").replaceChildren();
+s.examples.forEach(example=>{
+const button=document.createElement("button");
+button.className="bg-slate-100 hover:bg-blue-100 border border-slate-300 px-3 py-2 rounded-lg text-xs font-bold";
+button.textContent=example[0];
+button.onclick=()=>{
+$("lab-input1").value=example[1];
+$("lab-input2").value=example[2]||"";
+updateLab();
+simulateLab();
+};
+$("examples").append(button);
+});
+updateLab();
+}
+
+function updateLab(){
+const s=scenarios[scenario];
+const a=$("lab-input1").value;
+const b=$("lab-input2").value;
+$("unsafe-query").textContent=s.unsafe(a,b);
+$("safe-query").textContent=s.safe;
+$("safe-params").textContent=JSON.stringify(s.params(a,b),null,2);
+$("lab-result").replaceChildren();
+}
+
+function simulateLab(){
+const a=$("lab-input1").value.trim();
+const b=$("lab-input2").value.trim();
+const fullInput=(a+" "+b).toLowerCase();
+const result=$("lab-result");
+result.replaceChildren();
+
+// 1. فحص وجود خطأ صياغة (Single Quote بدون إغلاق)
+const quoteCount=(a.match(/'/g)||[]).length;
+if(quoteCount % 2 !== 0 && !fullInput.includes("--")){
+result.innerHTML=`
+<div class="p-4 rounded-xl bg-amber-50 border border-amber-400 text-amber-900">
+<strong class="block text-base mb-1">⚠️ خطأ في قاعدة البيانات (SQL Syntax Error):</strong>
+<code class="code block bg-amber-100 p-2 rounded text-xs my-2">You have an error in your SQL syntax; check the manual near '${a}' at line 2</code>
+<p class="text-xs">تفسير للمتدرب: وجود علامة تنصيص مفردة غير مغلقة كسر بنية الاستعلام، وهذا يثبت للمهاجم أن المدخل غير محمي وقابل للحقن!</p>
+</div>`;
+return;
+}
+
+// 2. محاكاة نجاح الاختراق حسب السيناريو
+if(scenario==="login"){
+if(fullInput.includes("' or '1'='1") || fullInput.includes("' or 1=1") || fullInput.includes("admin' --")){
+result.innerHTML=`
+<div class="p-4 rounded-xl bg-red-50 border-2 border-red-500 text-red-900">
+<strong class="block text-base text-red-700 mb-2">🚨 نجح الاختراق! تم تجاوز المصادقة:</strong>
+<div class="bg-white p-3 rounded-lg border border-red-200 text-xs space-y-1">
+<p><strong>المستخدم المُسجل دخوله:</strong> admin (مدير النظام)</p>
+<p><strong>الصلاحية:</strong> صلاحيات كاملة (Superuser)</p>
+<p><strong>البريد المسجل:</strong> admin@techstore-demo.sa</p>
+</div>
+<p class="text-xs mt-2 text-slate-600">في الاستعلام المحمي (Prepared Statement)، تم البحث عن مستخدم اسمه الحرفي <code>${a}</code> وفشل الدخول.</p>
+</div>`;
+} else {
+result.innerHTML=`
+<div class="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900">
+<strong>✅ تنفيذ طبيعي:</strong> تم التحقق من بيانات <code>${a}</code> بشكل اعتيادي دون أي تجاوز.
+</div>`;
+}
+}
+else if(scenario==="search"){
+if(fullInput.includes("union") && fullInput.includes("select")){
+result.innerHTML=`
+<div class="p-4 rounded-xl bg-red-50 border-2 border-red-500 text-red-900">
+<strong class="block text-base text-red-700 mb-2">🚨 تم استخراج جدول المستخدمين السري (UNION Attack):</strong>
+<table class="w-full text-right bg-white border border-red-200 text-xs rounded overflow-hidden">
+<thead class="bg-red-100"><tr><th class="p-2">ID</th><th class="p-2">اسم المستخدم</th><th class="p-2">كلمة المرور (Hash)</th></tr></thead>
+<tbody>
+<tr class="border-t"><td class="p-2">1</td><td class="p-2 font-bold">admin</td><td class="p-2 code">$2y$10$92IXUNpkjO0rOQ5byMi...</td></tr>
+<tr class="border-t"><td class="p-2">2</td><td class="p-2">sara_manager</td><td class="p-2 code">$2y$10$TKh8H1.PfQx37YgCzwi...</td></tr>
+<tr class="border-t"><td class="p-2">3</td><td class="p-2">student_01</td><td class="p-2 code">$2y$10$e0MYzXyjpJS7Pd0RVvH...</td></tr>
+</tbody>
+</table>
+</div>`;
+} else {
+result.innerHTML=`
+<div class="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900">
+<strong>✅ نتائج البحث الاعتيادية:</strong> عرض المنتجات المطابقة لكلمة "<strong>${a}</strong>" فقط.
+</div>`;
+}
+}
+else if(scenario==="tracking"){
+if(fullInput.includes("' or '1'='1") || fullInput.includes("' or 1=1")){
+result.innerHTML=`
+<div class="p-4 rounded-xl bg-red-50 border-2 border-red-500 text-red-900">
+<strong class="block text-base text-red-700 mb-2">🚨 تم تسريب جميع طلبات العملاء من قاعدة البيانات:</strong>
+<table class="w-full text-right bg-white border border-red-200 text-xs">
+<thead class="bg-red-100"><tr><th class="p-2">رقم الطلب</th><th class="p-2">اسم العميل</th><th class="p-2">المبلغ</th></tr></thead>
+<tbody>
+<tr class="border-t"><td class="p-2">ORD-1024</td><td class="p-2">محمد العتيبي</td><td class="p-2">5,699 ر.س</td></tr>
+<tr class="border-t"><td class="p-2">ORD-1025</td><td class="p-2">نورة القحطاني</td><td class="p-2">4,799 ر.س</td></tr>
+<tr class="border-t"><td class="p-2">ORD-1026</td><td class="p-2">خالد السبيعي</td><td class="p-2">9,240 ر.س</td></tr>
+</tbody>
+</table>
+</div>`;
+} else {
+result.innerHTML=`
+<div class="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900">
+<strong>✅ نتيجة الطلب المحدد:</strong> عرض بيانات الشحنة رقم <strong>${a}</strong> فقط.
+</div>`;
+}
+}
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+renderProducts(products);
+updateCart();
+if(window.lucide)lucide.createIcons();
+});
+</script>
+</body>
+</html>
